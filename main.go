@@ -19,7 +19,6 @@ type Expense struct {
 
 const expenseFile = "expense.json"
 
-// Загружает расходы из файла
 func loadExpenses() ([]Expense, error) {
 	if _, err := os.Stat(expenseFile); os.IsNotExist(err) {
 		return []Expense{}, nil
@@ -39,7 +38,6 @@ func loadExpenses() ([]Expense, error) {
 	return expenses, nil
 }
 
-// Сохраняет расходы в файл
 func saveExpenses(expenses []Expense) error {
 	data, err := json.MarshalIndent(expenses, "", " ")
 	if err != nil {
@@ -49,7 +47,6 @@ func saveExpenses(expenses []Expense) error {
 	return os.WriteFile(expenseFile, data, 0644)
 }
 
-// Генерация уникального ID для нового расхода
 func generateUniqueID(expenses []Expense) int {
 	maxID := 0
 	for _, expense := range expenses {
@@ -60,7 +57,6 @@ func generateUniqueID(expenses []Expense) int {
 	return maxID + 1
 }
 
-// Handler для добавления нового расхода
 func addExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST requests allowed", http.StatusMethodNotAllowed)
@@ -80,7 +76,6 @@ func addExpenseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Генерация уникального ID
 	expense.ID = generateUniqueID(expenses)
 	expense.CreatedAt = time.Now()
 	expense.UpdatedAt = time.Now()
@@ -98,7 +93,6 @@ func addExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(expense)
 }
 
-// Handler для получения списка расходов
 func listExpensesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET requests allowed", http.StatusMethodNotAllowed)
@@ -115,7 +109,6 @@ func listExpensesHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(expenses)
 }
 
-// Handler для получения сводки расходов
 func summaryExpensesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET requests allowed", http.StatusMethodNotAllowed)
@@ -137,14 +130,12 @@ func summaryExpensesHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]int{"total": totalSum})
 }
 
-// Handler для обновления существующего расхода
 func updateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		http.Error(w, "Only PUT requests allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Извлекаем ID из URL, например, /expenses/update/1
 	idStr := r.URL.Path[len("/expenses/update/"):]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -168,7 +159,6 @@ func updateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	found := false
 	for i, expense := range expenses {
 		if expense.ID == id {
-			// Обновляем поля
 			expenses[i].Description = updatedExpense.Description
 			expenses[i].Amount = updatedExpense.Amount
 			expenses[i].UpdatedAt = time.Now()
@@ -192,14 +182,12 @@ func updateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(expenses)
 }
 
-// Handler для удаления расхода
 func deleteExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Only DELETE requests allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Извлекаем ID из URL, например, /expenses/delete/1
 	idStr := r.URL.Path[len("/expenses/delete/"):]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -216,7 +204,6 @@ func deleteExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	found := false
 	for i, expense := range expenses {
 		if expense.ID == id {
-			// Удаляем расход из списка
 			expenses = append(expenses[:i], expenses[i+1:]...)
 			found = true
 			break
@@ -234,17 +221,15 @@ func deleteExpenseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent) // 204 No Content
+	w.WriteHeader(http.StatusNoContent)
 }
 
-// Запуск сервера
 func main() {
-	// Маршруты для CRUD операций
-	http.HandleFunc("/expenses", listExpensesHandler)            // GET: Получение списка расходов
-	http.HandleFunc("/expenses/add", addExpenseHandler)          // POST: Добавление расхода
-	http.HandleFunc("/expenses/summary", summaryExpensesHandler) // GET: Сводка расходов
-	http.HandleFunc("/expenses/update/", updateExpenseHandler)   // PUT: Обновление расхода (URL: /expenses/update/{id})
-	http.HandleFunc("/expenses/delete/", deleteExpenseHandler)   // DELETE: Удаление расхода (URL: /expenses/delete/{id})
+	http.HandleFunc("/expenses", listExpensesHandler)
+	http.HandleFunc("/expenses/add", addExpenseHandler)
+	http.HandleFunc("/expenses/summary", summaryExpensesHandler)
+	http.HandleFunc("/expenses/delete/", deleteExpenseHandler)
+	http.HandleFunc("/expenses/update/", updateExpenseHandler)
 
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	err := http.ListenAndServe(":8080", nil)
